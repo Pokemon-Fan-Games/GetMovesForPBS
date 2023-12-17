@@ -160,11 +160,13 @@ def scrape(pokemons):
                 elif i == 2:
                     move_name = column.text.strip().replace(" ", "").upper()
             if len(number) > 0 and len(move_name) > 0:
-                moves.append(move_name)
-        tms[pokemon.upper()] = moves
+                if tms[move_name]:
+                    tms[move_name].append(pokemon.upper()) 
+                else:
+                    tms[move_name] = [pokemon.upper()]
     return tms
 
-def update_file(tms, pokemon):
+def update_file(tms):
     global file_path
     file_modified = False
     start_loading("Actualizando archivo")
@@ -176,10 +178,12 @@ def update_file(tms, pokemon):
                 tm_name = line_part1.split("]")[0].strip()
                 if i+1 >= len(file_content):
                     break
-                if tm_name not in tms[pokemon]:
+                if tm_name not in tms:
                     continue
                 pokemons = file_content[i+1].strip().split(",")
-                if pokemon not in pokemons:
+                for pokemon in tms[tm_name]:
+                    if pokemon in pokemons:
+                        continue
                     pokemons.append(pokemon)
                     file_content[i+1] = ",".join(pokemons) + "\n"
                     file_modified = True
@@ -189,11 +193,10 @@ def update_file(tms, pokemon):
             file.close()
         stop_loading()
 
-def process(pokemon):
-    tms = scrape(pokemon)
-    pokemon = pokemon.upper()
-    update_file(tms, pokemon)
-    tk.messagebox.showinfo('MTs actualizadas', 'Se actualizaron las MTs: ' + ','.join(tms[pokemon]) + ' para el pokémon ' + pokemon)
+def process(pokemons):
+    tms = scrape(pokemons)
+    update_file(tms)
+    tk.messagebox.showinfo('MTs actualizadas', 'Se actualizaron las MTs para el/los pokémon ' + ', '.join(pokemons))
 
 def read_pokemon_file(file_path_pokemon):
     pokemons = []
