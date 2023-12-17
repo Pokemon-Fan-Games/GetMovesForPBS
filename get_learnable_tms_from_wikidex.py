@@ -126,12 +126,17 @@ def scrape(pokemons):
     start_loading("Buscando MTs")
     tms = {}
     for pokemon in pokemons:
-        url = "https://bulbapedia.bulbagarden.net/wiki/" + pokemon.capitalize() + '_(Pokémon)'
+        if 'fE' in pokemon:
+            pokemon_url = pokemon.replace('fE', '♀')
+        elif 'mA' in pokemon:
+            pokemon_url = pokemon.replace('mA', '♂')
+        else:
+            pokemon_url = pokemon
+        url = "https://bulbapedia.bulbagarden.net/wiki/" + pokemon_url.capitalize() + '_(Pokémon)'
         response = requests.get(url)
         if response.status_code != 200:
-            tk.messagebox.showerror('Pokémon no encontrado', 'No se encontro el pokémon en la wikidex revise que haya escrito bien el nombre')
-            entry_poke.focus()
-            return {}
+            tk.messagebox.showerror('Pokémon no encontrado', 'No se encontro el pokémon ' +  pokemon + ' en la bulbapedia revise que haya escrito bien el nombre')
+            continue
         html = response.content
         # get table with id tm-globalid-2
         soup = BeautifulSoup(html, "html.parser")
@@ -160,7 +165,7 @@ def scrape(pokemons):
                 elif i == 2:
                     move_name = column.text.strip().replace(" ", "").upper()
             if len(number) > 0 and len(move_name) > 0:
-                if tms[move_name]:
+                if move_name in tms:
                     tms[move_name].append(pokemon.upper()) 
                 else:
                     tms[move_name] = [pokemon.upper()]
@@ -195,6 +200,8 @@ def update_file(tms):
 
 def process(pokemons):
     tms = scrape(pokemons)
+    if not tms:
+        return
     update_file(tms)
     tk.messagebox.showinfo('MTs actualizadas', 'Se actualizaron las MTs para el/los pokémon ' + ', '.join(pokemons))
 
