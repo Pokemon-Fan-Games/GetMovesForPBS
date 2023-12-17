@@ -126,16 +126,16 @@ def scrape(pokemons):
     start_loading("Buscando MTs")
     tms = {}
     for pokemon in pokemons:
-        if 'fE' in pokemon:
-            pokemon_url = pokemon.replace('fE', '♀')
-        elif 'mA' in pokemon:
-            pokemon_url = pokemon.replace('mA', '♂')
+        if 'fE' in pokemon[1]:
+            pokemon_url = pokemon[0]+'♀'
+        elif 'mA' in pokemon[1]:
+            pokemon_url = pokemon_url = pokemon[0]+'♂'
         else:
-            pokemon_url = pokemon
+            pokemon_url = pokemon[0].replace(" ", "_")
         url = "https://bulbapedia.bulbagarden.net/wiki/" + pokemon_url.capitalize() + '_(Pokémon)'
         response = requests.get(url)
         if response.status_code != 200:
-            tk.messagebox.showerror('Pokémon no encontrado', 'No se encontro el pokémon ' +  pokemon + ' en la bulbapedia revise que haya escrito bien el nombre')
+            tk.messagebox.showwarning('Pokémon no encontrado', 'No se encontro el pokémon ' +  pokemon + ' en la bulbapedia revise que haya escrito bien el nombre, se siguira buscando el resto de los pokémon')
             continue
         html = response.content
         # get table with id tm-globalid-2
@@ -210,9 +210,11 @@ def read_pokemon_file(file_path_pokemon):
     with open (file_path_pokemon, "r", encoding='utf-8') as file:
         lines = file.readlines()
         for line in lines:
-            if line.startswith("InternalName"):
+            if line.startswith("Name"):
                 pokemon_name = line.split("=")[1].strip()
-                pokemons.append(pokemon_name)
+            if line.startswith("InternalName"):
+                intenal_name = line.split("=")[1].strip()
+                pokemons.append([pokemon_name, intenal_name])
     return pokemons
 
 def execute():
