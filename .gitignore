@@ -1,0 +1,4 @@
+build/
+dist/
+venv/
+get_learnable_tms_from_wikidex.spec
