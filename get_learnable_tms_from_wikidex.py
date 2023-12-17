@@ -166,9 +166,9 @@ def scrape(pokemons):
                     move_name = column.text.strip().replace(" ", "").upper()
             if len(number) > 0 and len(move_name) > 0:
                 if move_name in tms:
-                    tms[move_name].append(pokemon.upper()) 
+                    tms[move_name].append(pokemon[1].upper()) 
                 else:
-                    tms[move_name] = [pokemon.upper()]
+                    tms[move_name] = [pokemon[1].upper()]
     return tms
 
 def update_file(tms):
@@ -203,7 +203,7 @@ def process(pokemons):
     if not tms:
         return
     update_file(tms)
-    tk.messagebox.showinfo('MTs actualizadas', 'Se actualizaron las MTs para el/los pokémon ' + ', '.join(pokemons))
+    tk.messagebox.showinfo('MTs actualizadas', f'Se actualizaron las MTs de {len(pokemons)} pokemon(s)')
 
 def read_pokemon_file(file_path_pokemon):
     pokemons = []
