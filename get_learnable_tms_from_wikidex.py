@@ -83,10 +83,10 @@ def stop_loading():
     progressbar.grid_remove()
     progressbar_label.grid_remove()
 
-def scrape_wikidex(pokemon):
+def scrape(pokemon):
     # Get the html from the website
     start_loading("Buscando MTs")
-    url = "https://www.wikidex.net/wiki/" + pokemon.capitalize()
+    url = "https://bulbapedia.bulbagarden.net/wiki/" + pokemon.capitalize() + '_(Pokémon)'
     response = requests.get(url)
     if response.status_code != 200:
         tk.messagebox.showerror('Pokémon no encontrado', 'No se encontro el pokémon en la wikidex revise que haya escrito bien el nombre')
@@ -95,13 +95,13 @@ def scrape_wikidex(pokemon):
     html = response.content
     # get table with id tm-globalid-2
     soup = BeautifulSoup(html, "html.parser")
-    table = soup.find("table", {"class": "movmtmo sortable"})
-    
+    span_by_tm = soup.select("span#By_TM")[0]
+    table = span_by_tm.findNext("table")
     if not table:
         tk.messagebox.showwarning('No hay MTs', 'No se encontraron MTs para el pokemón en la wikidex')
         return {}
     # get all rows from the table
-    rows = table.findAll("tbody")[0].findAll("tr")[1:]
+    rows = table.findAll("tbody")[0].findAll("tr")[6:]
     # get all the tms from the rows
     tms = {}
     # global tms
@@ -113,20 +113,10 @@ def scrape_wikidex(pokemon):
         number = ""
         move_name = ""
         for i, column in enumerate(table_columns):
-            if i == 0:
+            if i == 1:
                 number = column.text.upper().split("\n")[0]
-            elif i == 1:
-                move_url = "https://www.wikidex.net" + column.find("a")["href"]
-                move_response = requests.get(move_url)
-                if move_response.status_code != 200:
-                    continue
-                move_html = move_response.content
-                move_soup = BeautifulSoup(move_html, "html.parser")
-                datos_resalto = move_soup.find("table", {"class": "datos resalto"})
-                datos_resalto_td = datos_resalto.find("tr").find("td")
-                move_name_english = datos_resalto_td.find("span", {"id": "nombreingles"}).text
-                move_name = move_name_english.strip().replace(" ", "").upper()
-                move_name = move_name.replace("-", "")
+            elif i == 2:
+                move_name = column.text.strip().replace(" ", "").upper()
         if len(number) > 0 and len(move_name) > 0:
             moves.append(move_name)
     tms[pokemon.upper()] = moves
@@ -158,7 +148,7 @@ def update_file(tms, pokemon):
         stop_loading()
 
 def process(pokemon):
-    tms = scrape_wikidex(pokemon)
+    tms = scrape(pokemon)
     pokemon = pokemon.upper()
     # t2 = threading.Thread(target=update_file, args=(tms, pokemon, ))
     # t2.start()
