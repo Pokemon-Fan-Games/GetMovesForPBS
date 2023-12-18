@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
+import re
 import threading
 import sys, os
 def resource(relative_path):
@@ -128,19 +129,25 @@ def scrape(pokemons):
     for pokemon in pokemons:
         if 'fE' in pokemon[1]:
             pokemon_url = pokemon[0]+'♀'
+            pokemon_url.title()
         elif 'mA' in pokemon[1]:
             pokemon_url = pokemon_url = pokemon[0]+'♂'
+            pokemon_url.title()
+        elif "'" in pokemon[0]:
+            pokemon_url = pokemon[0].capitalize()
         else:
-            pokemon_url = pokemon[0].replace(" ", "_")
-        url = "https://bulbapedia.bulbagarden.net/wiki/" + pokemon_url.capitalize() + '_(Pokémon)'
+            pokemon_url = pokemon[0].title()
+        pokemon_url = pokemon[0].replace(" ", "_")
+        url = "https://bulbapedia.bulbagarden.net/wiki/" + pokemon_url + '_(Pokémon)'
+        print(url)
         response = requests.get(url)
         if response.status_code != 200:
-            tk.messagebox.showwarning('Pokémon no encontrado', 'No se encontro el pokémon ' +  pokemon + ' en la bulbapedia revise que haya escrito bien el nombre, se siguira buscando el resto de los pokémon')
+            tk.messagebox.showwarning('Pokémon no encontrado', 'No se encontro el pokémon ' +  pokemon[0] + ' en la bulbapedia revise que haya escrito bien el nombre, se siguira buscando el resto de los pokémon')
             continue
         html = response.content
         # get table with id tm-globalid-2
         soup = BeautifulSoup(html, "html.parser")
-        span_by_tm = soup.find('span', {"id":"By_TM"})
+        span_by_tm = soup.find('span', {"id": re.compile('By_TM*')})
         if not span_by_tm:
             continue
         table = span_by_tm.findNext("table")
@@ -151,7 +158,6 @@ def scrape(pokemons):
         rows = table.findAll("tbody")[0].findAll("tr")[6:-1] # first 5 rows are headers
         # get all the tms from the rows
         
-        moves = []
         for row in rows:
             table_columns = row.findAll("td")
             if len(table_columns) == 0:
@@ -201,9 +207,11 @@ def update_file(tms):
 def process(pokemons):
     tms = scrape(pokemons)
     if not tms:
-        return
-    update_file(tms)
-    tk.messagebox.showinfo('MTs actualizadas', f'Se actualizaron las MTs de {len(pokemons)} pokemon(s)')
+        tk.messagebox.showerror('No hay MTs', 'No se encontraron MTs para el pokemón')
+        stop_loading()
+    else:
+        update_file(tms)
+        tk.messagebox.showinfo('MTs actualizadas', f'Se actualizaron las MTs de {len(pokemons)} pokemon(s)')
 
 def read_pokemon_file(file_path_pokemon):
     pokemons = []
@@ -233,7 +241,7 @@ def execute():
     if file_path_pokemon:
         pokemons = read_pokemon_file(file_path_pokemon)
     else:
-        pokemons = [pokemon]
+        pokemons = [[pokemon, pokemon.upper().replace(" ", "").replace("-", "")]]
     process_thread = threading.Thread(target=process, args=(pokemons, ))
     process_thread.start()    
 
