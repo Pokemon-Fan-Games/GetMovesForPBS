@@ -1,4 +1,4 @@
-# Get-TMs-from-Wikidex
+# Get TMs For PBS
 
 Esta es una pequeña aplicacion que usa beautifulsoup para scrapear bulbapedia, obtiene todos los MTs que puede aprender el pokemon ingresado y los agrega al archivo tm.txt PBS.
 
