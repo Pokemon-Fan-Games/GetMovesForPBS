@@ -34,6 +34,12 @@ cached_level_moves = {}
 toggle_button = None
 root = tk.Tk()
 is_on = False
+
+def on_closing():
+    global tm_thread, level_moves_thread
+    if messagebox.askokcancel("Salir", "¿Está seguro de que desea salir y cancelar todos los procesos pendientes? Esto puede generar que los archivos queden corruptos."):
+        root.quit()
+
 def create_screen():
     global entry_poke
     global file_label
@@ -44,9 +50,8 @@ def create_screen():
     global progressbar
     global progressbar_label
     global toggle_button
-# Get user input
     global root
-    #root.geometry("350x150")
+    
     tk.Label(root, text="Seleccione el archivo pokemon.txt").grid(row=0, column=0, pady=5, padx=15, sticky='w')
     tk.Button(root, text="Seleccione el archivo", command=open_pokemon_file).grid(row=0, column=1, pady=5, padx=15)
     file_label_pokemon = tk.Label(root, text="Archivo Pokemons: ")
@@ -75,6 +80,7 @@ def create_screen():
 
     root.title("Buscador de MTs")
     root.iconbitmap(resource("tmicon.ico"))
+    root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()
 
 def turn_on_level_moves():
@@ -165,7 +171,6 @@ def stop_loading():
 
 
 def scrape_level_moves(pokemons=None, pokemon=None, soup=None):
-    # Get the html from the website
     if not soup: start_loading("Buscando Aprendizaje por nivel") 
     level_moves = {}
     if pokemon and soup:
@@ -177,7 +182,7 @@ def scrape_level_moves(pokemons=None, pokemon=None, soup=None):
         table = span_by_leveling.findNext("table")
         if not table:
             return
-        # get all rows from the table
+
         rows = table.findAll("tbody")[0].findAll("tr")[6:-1]
         for row in rows:
             table_columns = row.findAll("td")
@@ -217,7 +222,6 @@ def scrape_level_moves(pokemons=None, pokemon=None, soup=None):
             messagebox.showwarning('Pokémon no encontrado', 'No se encontro el pokémon ' +  pokemon[0] + ' en la bulbapedia revise que haya escrito bien el nombre, se siguira buscando el resto de los pokémon')
             continue
         html = response.content
-        # get table with id tm-globalid-2
         soup = BeautifulSoup(html, "html.parser")
         for hidden in soup.body.find_all(style=re.compile(r'display:\s*none')):
             hidden.decompose()
@@ -231,10 +235,8 @@ def scrape_level_moves(pokemons=None, pokemon=None, soup=None):
         if not table:
             messagebox.showwarning('No hay MTs', 'No se encontraron MTs para el pokemón en la bulbapedia')
             return {}
-        # get all rows from the table
+
         rows = table.findAll("tbody")[0].findAll("tr")[6:-1] # first 5 rows are headers
-        # get all the tms from the rows
-        
         for row in rows:
             table_columns = row.findAll("td")
             if len(table_columns) == 0:
@@ -256,7 +258,6 @@ def scrape_level_moves(pokemons=None, pokemon=None, soup=None):
     return level_moves
 
 def scrape(pokemons):
-    # Get the html from the website
     start_loading("Buscando MTs")
     tms = {}
     global cached_level_moves
@@ -279,7 +280,6 @@ def scrape(pokemons):
             messagebox.showwarning('Pokémon no encontrado', 'No se encontro el pokémon ' +  pokemon[0] + ' en la bulbapedia revise que haya escrito bien el nombre, se siguira buscando el resto de los pokémon')
             continue
         html = response.content
-        # get table with id tm-globalid-2
         soup = BeautifulSoup(html, "html.parser")
         cached_level_moves = scrape_level_moves(None, pokemon, soup)
         span_by_tm = soup.find('span', {"id": re.compile('By_TM*')})        
@@ -292,9 +292,7 @@ def scrape(pokemons):
             messagebox.showwarning('No hay MTs', 'No se encontraron MTs para el pokemón en la bulbapedia')
             return {}
         # get all rows from the table
-        rows = table.findAll("tbody")[0].findAll("tr")[6:-1] # first 5 rows are headers
-        # get all the tms from the rows
-        
+        rows = table.findAll("tbody")[0].findAll("tr")[6:-1] # first 5 rows are headers       
         for row in rows:
             table_columns = row.findAll("td")
             if len(table_columns) == 0:
@@ -393,8 +391,6 @@ def update_pokemon_file(level_moves, current_moves_old=None):
                                 current_moves.append(move[0])
                                 current_moves.append(move[1])
                             break
-                    #current_moves.append(move[0])
-                    #current_moves.append(move[1])
                 file_content[i] = "Moves=" + ",".join(current_moves) + "\n"
                 file_modified = True
         if file_modified:
@@ -425,10 +421,8 @@ def read_moves_file(file_path_moves):
     return moves
 
 def execute():
-    global tk_poke
-    global entry_poke
-    global file_path
-    global file_path_pokemon
+    global tk_poke, entry_poke, file_path, file_path_pokemon
+    
     pokemon = tk_poke.get()
     if not pokemon and not file_path_pokemon:
         messagebox.showerror('Los datos del pokemon no pueden estar vacios', 'Ingrese el nombre del pokemon o seleccione el archivo pokemon.txt')
@@ -441,13 +435,12 @@ def execute():
         pokemons = read_pokemon_file(file_path_pokemon)
     else:
         pokemons = [[pokemon, pokemon.upper().replace(" ", "").replace("-", "")]]
-    process_thread = threading.Thread(target=process, args=(pokemons, ))
-    process_thread.start()    
+    tm_thread = threading.Thread(target=process, daemon=True, args=(pokemons, ))
+    tm_thread.start()    
 
 
 def update_level_moves():
     global file_path_pokemon
-    global file_path_moves
     if not file_path_pokemon or not file_path_moves:
         if not file_path_pokemon:
             messagebox.showerror('Los datos del pokemon no pueden estar vacios', 'Debe seleccionar el archivo pokemon.txt')
@@ -461,8 +454,8 @@ def update_level_moves():
     pokemons = read_pokemon_file(file_path_pokemon)
     moves = read_moves_file(file_path_moves)
 
-    process_thread = threading.Thread(target=search_level_moves, args=(pokemons, moves,))
-    process_thread.start()    
+    level_moves_thread = threading.Thread(target=search_level_moves, daemon=True, args=(pokemons, moves,))
+    level_moves_thread.start()
 
 
 
