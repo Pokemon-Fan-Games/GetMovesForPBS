@@ -2,3 +2,6 @@ build/
 dist/
 venv/
 get_learnable_tms_from_wikidex.spec
+exe.md
+get_moves
+get_moves.zip
