@@ -194,7 +194,7 @@ def scrape_level_moves(pokemons=None, pokemon=None, soup=None):
                 if i == 0:
                     level = column.text.split("\n")[0]
                     if not level.isdigit():
-                        break
+                        level = 1
                 if i == 1:
                     move_name =  column.text.strip().replace(" ", "").upper()
             if len(level) > 0 and len(move_name) > 0:
@@ -202,6 +202,7 @@ def scrape_level_moves(pokemons=None, pokemon=None, soup=None):
                     level_moves[pokemon[1]].append((level, move_name)) 
                 else:
                     level_moves[pokemon[1]] = [(level, move_name)]
+        level_moves[pokemon[1]].sort(key=lambda a: a[0])
         return level_moves
 
     for pokemon in pokemons:
@@ -247,7 +248,7 @@ def scrape_level_moves(pokemons=None, pokemon=None, soup=None):
                 if i == 0:
                     level = column.text.split("\n")[0]
                     if not level.isdigit():
-                        break
+                        level = 1
                 if i == 1:
                     move_name =  column.text.strip().replace(" ", "").upper()
             if len(level) > 0 and len(move_name) > 0:
@@ -255,6 +256,7 @@ def scrape_level_moves(pokemons=None, pokemon=None, soup=None):
                     level_moves[pokemon[1]].append((level, move_name)) 
                 else:
                     level_moves[pokemon[1]] = [(level, move_name)]
+        level_moves[pokemon[1]].sort(key=lambda a: a[0])
     return level_moves
 
 def scrape(pokemons):
