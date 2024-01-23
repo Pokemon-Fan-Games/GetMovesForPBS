@@ -28,6 +28,6 @@ Esta es una pequeña aplicacion que usa beautifulsoup para scrapear bulbapedia, 
 ### Si el programa esta en el status "Actualizando archivo", no cerrarlo hasta que termine ya que podría ocasionar que los archivos queden corruptos o que pierdan información:
 
 ### Tengo un problema, "El progrma no termina"
-Puede ser que el programa siga procesando, hay una barra abajo que indica que el programa esta trabajando, al finalizar les mostrará un mensaje, ir a buscar infomación a otras paginas de internet a través de web scraping es un proceso lento, y si lo hacen para un archivo de pokemon.txt muy grande tardará bastante, dejenlo corriendo de fondo mientras hacen otras cosas. 
+Puede ser que el programa siga procesando, hay una barra abajo que indica si el programa esta trabajando, al finalizar les mostrará un mensaje, ir a buscar infomación a otras páginas de internet a través de web scraping es un proceso lento, y si lo hacen para un archivo de pokemon.txt muy grande tardará bastante, dejenlo corriendo de fondo mientras hacen otras cosas. 
 
 
