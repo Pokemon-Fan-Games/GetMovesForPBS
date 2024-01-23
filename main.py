@@ -49,7 +49,7 @@ def on_closing():
     if (not tm_thread or not tm_thread.is_alive()) and (not level_moves_thread or not level_moves_thread.is_alive()):
         root.quit()
         return
-    if messagebox.askokcancel("Salir", "¿Está seguro de que desea salir y cancelar todos los procesos pendientes? Esto puede generar que los archivos queden corruptos."):
+    if messagebox.askokcancel("Salir", "¿Está seguro de que desea salir y cancelar todos los procesos pendientes? Esto puede generar que los archivos queden corruptos o que se pierda información existente."):
         root.quit()
 
 def create_screen():
