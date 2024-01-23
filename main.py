@@ -65,10 +65,10 @@ def create_screen():
     global root
     
     tk.Label(root, text="Seleccione el archivo pokemon.txt").grid(row=0, column=0, pady=5, padx=15, sticky='w')
-    tk.Button(root, text="Seleccione el archivo", command=open_pokemon_file).grid(row=0, column=1, pady=5, padx=15)
+    tk.Button(root, text="Seleccionar archivo", command=open_pokemon_file).grid(row=0, column=1, pady=5, padx=15, ipadx=8)
     file_label_pokemon = tk.Label(root, text="Archivo Pokemons: ")
     file_label_pokemon.grid(row=1, column=0, pady=5, padx=15, columnspan=3, sticky='NW')
-    tk.Button(root, text="Deseleccionar Archivo: ", command=remove_pokemon_file).grid(row=1, column=1, pady=5, padx=15)
+    tk.Button(root, text="Deseleccionar Archivo", command=remove_pokemon_file).grid(row=1, column=1, pady=5, padx=15, ipadx=1)
     poke_name_label = tk.Label(root, text="Ingrese el nombre del pokemon")
     poke_name_label.grid(row=2, column=0, pady=5, padx=15, sticky='w')
     tk_poke = tk.StringVar()
@@ -90,7 +90,7 @@ def create_screen():
     progressbar_label = tk.Label(root, text="")
     progressbar = ttk.Progressbar(root, orient="horizontal", length=200, mode="indeterminate")
 
-    root.title("Buscador de MTs")
+    root.title("PBS Updater")
     root.iconbitmap(resource("tmicon.ico"))
     root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()
@@ -100,18 +100,18 @@ def turn_on_level_moves():
     is_on = not is_on
     select_file_label = tk.Label(root, text="Seleccione el archivo moves.txt")
     file_button = tk.Button(root, text="Seleccionar archivo", command=open_moves_file)
-    button = tk.Button(root, text="Actualizar aprendizaje por nivel", command=update_level_moves)
     checkbox_update_learn_level = tk.Checkbutton(root, text="Actualizar nivel de aprendizaje", variable = update_learn_level)
     checkbox_tutor_moves = tk.Checkbutton(root, text="Buscar movimientos por tutor", variable = search_tutor_moves)
     checkbox_egg_moves = tk.Checkbutton(root, text="Buscar movimientos huevo", variable = search_egg_moves)
+    button = tk.Button(root, text="Buscar y actualizar movimientos", command=update_level_moves)
     if is_on:
-        checkbox_update_learn_level.grid(row=8, column=0, pady=5, padx=15)
-        checkbox_tutor_moves.grid(row=8, column=1, pady=5, padx=15)
-        checkbox_egg_moves.grid(row=8, column=2, pady=5, padx=15)
-        select_file_label.grid(row=9, column=0, pady=5, padx=15, sticky='w')
-        file_button.grid(row=9, column=1, pady=5, padx=15)
-        file_label_moves.grid(row=10, column=0, pady=5, padx=15, columnspan=3, sticky='NW')
-        button.grid(row=11, columnspan=3, pady=5, padx=15, sticky='we')
+        checkbox_update_learn_level.grid(row=8, column=0, pady=5, padx=15, sticky='w')
+        checkbox_tutor_moves.grid(row=9, column=0, pady=5, padx=15, sticky='w')
+        checkbox_egg_moves.grid(row=9, column=1, pady=5)
+        select_file_label.grid(row=10, column=0, pady=5, padx=15, sticky='w')
+        file_button.grid(row=10, column=1, pady=5)
+        file_label_moves.grid(row=11, column=0, pady=5, padx=15, columnspan=3, sticky='NW')
+        button.grid(row=12, columnspan=3, pady=5, padx=15, sticky='we')
         toggle_button.config(relief="sunken")
     else:
         select_file_label.grid_remove()
@@ -174,9 +174,9 @@ def start_loading(label):
     global root
     progressbar_label.configure(text=label)
     if not progressbar_label.grid_info():
-        progressbar_label.grid(row=12, columnspan=3, pady=5, padx=15, sticky='we')
+        progressbar_label.grid(row=13, columnspan=3, pady=5, padx=15, sticky='we')
     #progressbar_label.grid(row=12, columnspan=3, pady=5, padx=15, sticky='we')
-    progressbar.grid(row=13, columnspan=3, pady=5, padx=15, sticky='we')
+    progressbar.grid(row=14, columnspan=3, pady=5, padx=15, sticky='we')
     progressbar.start()
     root.update_idletasks()
 
@@ -231,7 +231,8 @@ def parse_tutor_and_breeding_moves(pokemon, soup, tutor_moves={}, egg_moves={}):
     table = span_by_leveling.findNext("table")
     if not table:
         return tutor_moves, egg_moves
-
+    span_evolution = soup.find('span', {"id": re.compile('Evolution')})
+    is_baby_pokemon = False if 'evolves from' in span_evolution.findNext("p").text.strip() else True
     all_rows = table.findAll("tbody")[0].findAll("tr") 
     other_gens = all_rows[3].findAll("th")[0].findAll("a")
     for gen in other_gens:
@@ -244,7 +245,7 @@ def parse_tutor_and_breeding_moves(pokemon, soup, tutor_moves={}, egg_moves={}):
         span_by_tutor = soup_gen.find('span', {"id": re.compile('By_tutoring*')})
         if not span_by_breeding and not span_by_tutor:
             continue
-        if span_by_breeding:
+        if span_by_breeding and search_egg_moves.get() and is_baby_pokemon:
             table = span_by_breeding.findNext("table")
             all_rows = table.findAll("tbody")[0].findAll("tr") 
             rows = all_rows[5:-1] # first 5 rows are headers
@@ -264,7 +265,7 @@ def parse_tutor_and_breeding_moves(pokemon, soup, tutor_moves={}, egg_moves={}):
                     else:
                         egg_moves[pokemon[1]] = [move_name]
         
-        if span_by_tutor:
+        if span_by_tutor and search_tutor_moves.get():
             table = span_by_tutor.findNext("table")
             all_rows = table.findAll("tbody")[0].findAll("tr") 
             rows = all_rows[5:-1] # first 5 rows are headers
@@ -296,7 +297,7 @@ def scrape_moves(pokemons=None, pokemon=None, soup=None):
     }
     if pokemon and soup:
         moves["level"] = parse_level_moves(pokemon, soup)
-        moves["tutor"], moves["egg"] = parse_tutor_and_breeding_moves(pokemon, soup)
+        #moves["tutor"], moves["egg"] = parse_tutor_and_breeding_moves(pokemon, soup)
         return moves
     else:
         for pokemon in pokemons:
@@ -338,8 +339,7 @@ def scrape(pokemons):
         else:
             pokemon_url = pokemon[0].title()
         pokemon_url = pokemon[0].replace(" ", "_")
-        url = "https://bulbapedia.bulbagarden.net/wiki/" + pokemon_url + '_(Pokémon)'
-        print(url)
+        url = "https://bulbapedia.bulbagarden.net/wiki/" + pokemon_url + '_(Pokémon)' 
         response = requests.get(url)
         if response.status_code != 200:
             messagebox.showwarning('Pokémon no encontrado', 'No se encontro el pokémon ' +  pokemon[0] + ' en la bulbapedia revise que haya escrito bien el nombre, se siguira buscando el resto de los pokémon')
@@ -416,11 +416,18 @@ def process(pokemons):
 def search_level_moves(pokemons, existing_moves):
     global cached_moves
     moves = scrape_moves(pokemons) if not cached_moves['level'] else cached_moves
+    if not moves["egg"] and search_egg_moves.get():
+        moves = scrape_moves(pokemons)
+    if not moves["tutor"] and search_tutor_moves.get():
+        moves = scrape_moves(pokemons)
     if moves:
         update_pokemon_file(moves, existing_moves)
-        messagebox.showinfo('Movimientos actualizados', f'Se actualizaron los movimientos por nivel de {len(pokemons)} pokemon(s)')
+        if not search_egg_moves.get() and not search_tutor_moves.get():
+            messagebox.showinfo('Movimientos actualizados', f'Se actualizaron los movimientos por nivel de {len(pokemons)} pokemon(s)')
+        else:
+            messagebox.showinfo('Movimientos actualizados', f'Se actualizaron los movimientos de {len(pokemons)} pokemon(s)')
     else:
-        messagebox.showerror('No hay movimientos', 'No se encontraron movimientos por nivel.')
+        messagebox.showerror('No hay movimientos', 'No se encontraron movimientos para los Pokémon del archivo.')
         stop_loading()
 
 def update_pokemon_file(moves, existing_moves=[]):
@@ -454,20 +461,6 @@ def update_pokemon_file(moves, existing_moves=[]):
                     elif move[1] in current_moves_dict and not update_learn_level.get():
                         continue
                     current_moves_dict[move[1]] = move[0]
-                    # for j in range(previous_j, len(current_moves)):
-                    #     if j % 2 == 0:
-                    #         level = current_moves[j]
-                    #     else:
-                    #         continue
-                    #     if int(move[0]) <= int(level):
-                    #         if j+2 < len(current_moves):
-                    #             current_moves.insert(j+2, move[1])
-                    #             current_moves.insert(j+2, str(move[0]))
-                    #         else:
-                    #             current_moves.append(str(move[0]))
-                    #             current_moves.append(move[1])
-                    #         previous_j = j
-                    #         break
                 current_moves_updated = []
                 current_moves_dict = dict(sorted(current_moves_dict.items(), key=lambda item: int(item[1])))
                 for key, value in current_moves_dict.items():
